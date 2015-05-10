@@ -59,8 +59,12 @@ public class GmailConfig extends AbstractConnector {
 				handleException(connectException.getMessage(), connectException, messageContext);
 			}
 
+            String oauthRefreshToken =
+                                    GmailUtils.lookupFunctionParam(messageContext,
+                                                                   GmailConstants.GMAIL_PARAM_REFRESH_TOKEN);
+
 			// Storing OAuth user login details in the message context
-			this.storeOauthUserLogin(messageContext, username, oauthAccessToken);
+			this.storeOauthUserLogin(messageContext, username, oauthAccessToken, oauthRefreshToken);
 		} catch (MessagingException e) {
 			GmailUtils.storeErrorResponseStatus(messageContext,
 			                                    e,
@@ -86,7 +90,7 @@ public class GmailConfig extends AbstractConnector {
 	 * @throws MessagingException
 	 */
 	private void storeOauthUserLogin(MessageContext messageContext, String username,
-	                                 String oauthAccessToken) throws MessagingException {
+	                                 String oauthAccessToken, String oauthRefreshToken) throws MessagingException {
 		org.apache.axis2.context.MessageContext axis2MessageContext =
 		                                                              ((Axis2MessageContext) messageContext).getAxis2MessageContext();
 		Object loginMode = axis2MessageContext.getProperty(GmailConstants.GMAIL_LOGIN_MODE);
@@ -109,5 +113,6 @@ public class GmailConfig extends AbstractConnector {
 		log.info("Storing new username and access token");
 		messageContext.setProperty(GmailConstants.GMAIL_OAUTH_USERNAME, username);
 		messageContext.setProperty(GmailConstants.GMAIL_OAUTH_ACCESS_TOKEN, oauthAccessToken);
+        messageContext.setProperty(GmailConstants.GMAIL_OAUTH_REFRESH_TOKEN, oauthRefreshToken);
 	}
 }

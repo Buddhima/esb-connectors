@@ -18,6 +18,7 @@
 package org.wso2.carbon.connector.gmail;
 
 import java.io.IOException;
+import java.util.concurrent.locks.ReentrantLock;
 
 import org.apache.axiom.attachments.Attachments;
 import org.apache.commons.lang.StringUtils;
@@ -36,6 +37,9 @@ import com.google.code.javax.mail.internet.InternetAddress;
  * This class performs the "send mail" operation.
  */
 public class GmailSendMail extends AbstractConnector {
+
+    private String renewedAccessToken = null;
+    private ReentrantLock lock = new ReentrantLock();
 
 	/*
 	 * Sends an e-mail message to specified recipients.
@@ -70,6 +74,13 @@ public class GmailSendMail extends AbstractConnector {
 			String subject = this.setSubject(messageContext);
 			String textContent = this.setTextContent(messageContext);
 
+            // Re-assign access token if available
+            lock.lock();
+            if (renewedAccessToken != null) {
+                messageContext.setProperty(GmailConstants.GMAIL_OAUTH_ACCESS_TOKEN, renewedAccessToken);
+            }
+            lock.unlock();
+
 			GmailSMTPClientLoader smtpClientLoader = new GmailSMTPClientLoader();
 			log.info("Loading the SMTP connection");
 			GmailSMTPConnectionObject smtpConnectionObject =
@@ -95,6 +106,10 @@ public class GmailSendMail extends AbstractConnector {
 			                                    GmailErrorCodes.GMAIL_ERROR_CODE_CONNECT_EXCEPTION);
 			handleException(e.getMessage(), e, messageContext);
 		} catch (MessagingException e) {
+            // Refresh Access Token
+            lock.lock();
+            renewedAccessToken = GmailUtils.refreshAccessToken(messageContext);
+            lock.unlock();
 			GmailUtils.storeErrorResponseStatus(messageContext,
 			                                    e,
 			                                    GmailErrorCodes.GMAIL_ERROR_CODE_MESSAGING_EXCEPTION);

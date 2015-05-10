@@ -21,8 +21,12 @@ import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
+import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.List;
 
+import com.google.gson.JsonObject;
+import com.google.gson.JsonParser;
 import org.apache.axiom.om.OMAbstractFactory;
 import org.apache.axiom.om.OMElement;
 import org.apache.axiom.om.OMFactory;
@@ -31,6 +35,13 @@ import org.apache.axis2.context.OperationContext;
 import org.apache.commons.io.IOUtils;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
+import org.apache.http.HttpResponse;
+import org.apache.http.NameValuePair;
+import org.apache.http.client.HttpClient;
+import org.apache.http.client.entity.UrlEncodedFormEntity;
+import org.apache.http.client.methods.HttpPost;
+import org.apache.http.impl.client.DefaultHttpClient;
+import org.apache.http.message.BasicNameValuePair;
 import org.apache.synapse.MessageContext;
 import org.apache.synapse.SynapseConstants;
 import org.apache.synapse.core.axis2.Axis2MessageContext;
@@ -679,6 +690,48 @@ public final class GmailUtils {
 		transport.sendMessage(message, message.getAllRecipients());
 		log.info("The mail is succesfully sent");
 	}
+
+    public static String refreshAccessToken(MessageContext messageContext) {
+
+//        String refreshToken = messageContext.getProperty(GmailConstants.GMAIL_OAUTH_REFRESH_TOKEN).toString();
+//        if (refreshToken == "") {
+//            return false;
+//        }
+
+        HttpClient httpClient = new DefaultHttpClient();
+        HttpPost httpPost = new HttpPost("https://www.googleapis.com/oauth2/v3/token");
+        httpPost.setHeader("Content-Type", "application/x-www-form-urlencoded");
+
+        List<NameValuePair> urlParameters = new ArrayList<NameValuePair>();
+        urlParameters.add(new BasicNameValuePair("client_id", "244501108396-k0pan5bk1d3mtsqj3c1o06uentn0knrs.apps.googleusercontent.com"));
+        urlParameters.add(new BasicNameValuePair("client_secret", "DtyDJj2iMGbJpP3xITpvq9V1"));
+        urlParameters.add(new BasicNameValuePair("refresh_token", "1/_UYZWjY_4iuQYAK5vw1wwFhvYr-Hi6owUALzCgWMg_IMEudVrK5jSpoR30zcRFq6"));
+        urlParameters.add(new BasicNameValuePair("grant_type", "refresh_token"));
+
+        try {
+            httpPost.setEntity(new UrlEncodedFormEntity(urlParameters));
+
+            HttpResponse httpResponse = httpClient.execute(httpPost);
+
+            BufferedReader rd = new BufferedReader(
+                    new InputStreamReader(httpResponse.getEntity().getContent()));
+
+            StringBuffer result = new StringBuffer();
+            String line = "";
+            while ((line = rd.readLine()) != null) {
+                result.append(line);
+            }
+            JsonParser jsonParser = new JsonParser();
+            JsonObject jsonObject = (JsonObject)jsonParser.parse(result.toString());
+
+            return jsonObject.get("access_token").getAsString();
+
+        } catch (Exception e) {
+            System.out.println("FAILED TO GET ACCESS TOKEN USING REFRESH TOKEN !!!");
+        }
+
+        return null;
+    }
 
 	/**
 	 * Gets {@link IMAPFolder} when the folder name and the {@link IMAPStore} is

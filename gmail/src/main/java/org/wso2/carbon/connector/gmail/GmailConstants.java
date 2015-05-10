@@ -59,6 +59,11 @@ public final class GmailConstants {
 	 */
 	public static final String GMAIL_PARAM_OAUTH_ACCESS_TOKEN = "oauthAccessToken";
 
+    /**
+     * Name of the "OAuth refresh token" parameter in the synapse configuration.
+     */
+    public static final String GMAIL_PARAM_REFRESH_TOKEN = "oauthRefreshToken";
+
 	/**
 	 * Property name to store the user name for SASL authentication.
 	 */
@@ -79,6 +84,8 @@ public final class GmailConstants {
 	 * authentication.
 	 */
 	public static final String GMAIL_OAUTH_ACCESS_TOKEN = "gmail.oauth.accessToken";
+
+    public static final String GMAIL_OAUTH_REFRESH_TOKEN = "gmail.oauth.refreshToken";
 
 	/**
 	 * Property name to store whether the OAuth2 provider is initialized or not.
